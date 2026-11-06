@@ -5,8 +5,8 @@ import numpy as np
 from mlp import MLP
 
 LR = 0.5
-EPOCHS = 20
-TRAIN_SIZE = 1000
+EPOCHS = 1
+TRAIN_SIZE = 28000
 TEST_SIZE = 200
 
 data = np.load(os.path.join(HERE, "mnist_24.npz"))
@@ -54,6 +54,8 @@ def train(model):
             correct += guess(out) == y
             if step % 100 == 0:
                 print(f" step {step} avg cost {total_cost/step:.4f} train acc {correct / step:.1%}")
+            if step % 2000 == 0:
+                save_weights(model)
 
         save_weights(model)
         print(f"epoch {epoch} avg cost {total_cost / TRAIN_SIZE:.4f}")
