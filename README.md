@@ -5,6 +5,10 @@ This is me following Andrej Karpathy's Neural [Networks Zero to Hero](https://ww
 I plan to apply this to different projects in the future.
 
 ## Usage
+### MLP with handmade Tensor class
+After applying the MLP using the value class to the MNIST data set I realized it was painfully slow (about a quarter of the dataset in 10 hours), and started looking into how pytorch implemented features which made it considerably more effecient for general usecases. which I started working on the Tensor class to get the same effect with more effeciency.
+
+### MLP with Value class
 
 The neuron class initiates with the amount of inputs and creates random weights and biases for each, then can be called with your data set (i.e. x)
 
@@ -64,6 +68,5 @@ for k in range(20):
     
     print(k, loss.data)
 ```
-
 
 ### More Coming Soon!

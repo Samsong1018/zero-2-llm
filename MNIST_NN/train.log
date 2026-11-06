@@ -186,3 +186,19 @@ nohup: ignoring input
  step 18500 avg cost 0.2417 train acc 83.2%
  step 18600 avg cost 0.2410 train acc 83.3%
  step 18700 avg cost 0.2401 train acc 83.3%
+ step 18800 avg cost 0.2398 train acc 83.3%
+ step 18900 avg cost 0.2393 train acc 83.4%
+ step 19000 avg cost 0.2388 train acc 83.4%
+ step 19100 avg cost 0.2381 train acc 83.5%
+ step 19200 avg cost 0.2377 train acc 83.5%
+ step 19300 avg cost 0.2371 train acc 83.5%
+ step 19400 avg cost 0.2368 train acc 83.5%
+ step 19500 avg cost 0.2362 train acc 83.6%
+ step 19600 avg cost 0.2356 train acc 83.7%
+ step 19700 avg cost 0.2353 train acc 83.7%
+ step 19800 avg cost 0.2349 train acc 83.7%
+ step 19900 avg cost 0.2343 train acc 83.8%
+ step 20000 avg cost 0.2341 train acc 83.8%
+ step 20100 avg cost 0.2337 train acc 83.8%
+ step 20200 avg cost 0.2334 train acc 83.8%
+ step 20300 avg cost 0.2330 train acc 83.9%
