@@ -5,8 +5,8 @@ import numpy as np
 from mlp import MLP
 
 LR = 0.5
-EPOCHS = 1
-TRAIN_SIZE = 50
+EPOCHS = 20
+TRAIN_SIZE = 1000
 TEST_SIZE = 200
 
 data = np.load(os.path.join(HERE, "mnist_24.npz"))
