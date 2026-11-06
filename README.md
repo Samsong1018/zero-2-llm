@@ -8,6 +8,8 @@ I plan to apply this to different projects in the future.
 ### MLP with handmade Tensor class
 After applying the MLP using the value class to the MNIST data set I realized it was painfully slow (about a quarter of the dataset in 10 hours), and started looking into how pytorch implemented features which made it considerably more effecient for general usecases. which I started working on the Tensor class to get the same effect with more effeciency.
 
+The Tensor MLP works very similar to value, with the exception that it can run matrix multiplication and can run on the full datasets as opposed to individual items. The result is I could run 100 epochs for the full dataset (in batches of 32) in about 5min as opposed to the MLP using the value class. 
+
 ### MLP with Value class
 
 The neuron class initiates with the amount of inputs and creates random weights and biases for each, then can be called with your data set (i.e. x)

@@ -203,3 +203,4 @@ nohup: ignoring input
  step 20200 avg cost 0.2334 train acc 83.8%
  step 20300 avg cost 0.2330 train acc 83.9%
  step 20400 avg cost 0.2324 train acc 83.9%
+ step 20500 avg cost 0.2321 train acc 84.0%
