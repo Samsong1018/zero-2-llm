@@ -22,7 +22,7 @@ l = Layer (3, 5)
 l(x) # this would return an array of five output values
 ```
 
-The MLP class takes number of inputs and array of layer size. The below example would create an MLP with 3 inputs two hidden layers with four neurons each which creates a single output.
+The MLP class takes number of inputs and array of layer size. The below example would create an MLP with 3 inputs two hidden layers with four neurons each which creates a single output. Finally MLP takes an activation function parameter to clarify between tanh and sigmoid, default is tanh.
 
 
 ```
