@@ -70,5 +70,7 @@ for k in range(20):
     
     print(k, loss.data)
 ```
+## Makemore MLP
 
+This is a super simple Bigram Guesser similar the Makemore but I used my Tensor MLP design to guess the next character. weights.json was formed using a 27, [32, 32, 27] MLP and simplified was made with a 27, [27] MLP. Because we're using bigrams they create generally the same results. 
 ### More Coming Soon!
