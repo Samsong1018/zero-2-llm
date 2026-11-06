@@ -7,7 +7,7 @@ from tensor import Tensor
 
 LR = 2.0
 BATCH = 32
-EPOCHS = 20
+EPOCHS = 100
 
 data = np.load(os.path.join(HERE, "mnist_24.npz"))
 
@@ -28,6 +28,7 @@ def save_weights(model, path=os.path.join(HERE, "weightsTensor.json")):
 def train(model):
     params = model.parameters()
     for epoch in range(EPOCHS):
+        lr = LR * 0.5 * (1 + np.cos(np.pi * epoch / EPOCHS))
         total_cost, correct, seen = 0.0, 0, 0
 
         order = np.random.permutation(len(x_train))
@@ -43,14 +44,14 @@ def train(model):
                 p.zero_grad()
             loss.backward()
             for p in params:
-                p.data -= LR * p.grad
+                p.data -= lr * p.grad
             
             total_cost += loss.data * len(idx)
             seen += len(idx)
             correct += (np.argmax(out.data, axis=1) == y_train[idx]).sum()
 
             if step % 300 == 0:
-                print(f'{total_cost / seen} | f{correct / seen}')
+                print(f'{total_cost / seen} | {correct / seen}')
         
         print(f"epoch {epoch} done, avg cost {total_cost / seen:.4f}")
         save_weights(model)
