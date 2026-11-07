@@ -224,3 +224,60 @@ nohup: ignoring input
  step 22300 avg cost 0.2247 train acc 84.5%
  step 22400 avg cost 0.2242 train acc 84.6%
  step 22500 avg cost 0.2238 train acc 84.6%
+ step 22600 avg cost 0.2234 train acc 84.6%
+ step 22700 avg cost 0.2226 train acc 84.7%
+ step 22800 avg cost 0.2223 train acc 84.7%
+ step 22900 avg cost 0.2224 train acc 84.7%
+ step 23000 avg cost 0.2221 train acc 84.7%
+ step 23100 avg cost 0.2216 train acc 84.8%
+ step 23200 avg cost 0.2214 train acc 84.8%
+ step 23300 avg cost 0.2211 train acc 84.8%
+ step 23400 avg cost 0.2207 train acc 84.8%
+ step 23500 avg cost 0.2203 train acc 84.9%
+ step 23600 avg cost 0.2201 train acc 84.9%
+ step 23700 avg cost 0.2201 train acc 84.9%
+ step 23800 avg cost 0.2200 train acc 84.9%
+ step 23900 avg cost 0.2198 train acc 84.9%
+ step 24000 avg cost 0.2194 train acc 85.0%
+ step 24100 avg cost 0.2189 train acc 85.0%
+ step 24200 avg cost 0.2185 train acc 85.0%
+ step 24300 avg cost 0.2179 train acc 85.1%
+ step 24400 avg cost 0.2175 train acc 85.1%
+ step 24500 avg cost 0.2172 train acc 85.1%
+ step 24600 avg cost 0.2168 train acc 85.2%
+ step 24700 avg cost 0.2163 train acc 85.2%
+ step 24800 avg cost 0.2158 train acc 85.2%
+ step 24900 avg cost 0.2154 train acc 85.3%
+ step 25000 avg cost 0.2152 train acc 85.3%
+ step 25100 avg cost 0.2150 train acc 85.3%
+ step 25200 avg cost 0.2145 train acc 85.3%
+ step 25300 avg cost 0.2141 train acc 85.4%
+ step 25400 avg cost 0.2138 train acc 85.4%
+ step 25500 avg cost 0.2136 train acc 85.4%
+ step 25600 avg cost 0.2132 train acc 85.4%
+ step 25700 avg cost 0.2128 train acc 85.5%
+ step 25800 avg cost 0.2124 train acc 85.5%
+ step 25900 avg cost 0.2124 train acc 85.5%
+ step 26000 avg cost 0.2121 train acc 85.5%
+ step 26100 avg cost 0.2123 train acc 85.5%
+ step 26200 avg cost 0.2119 train acc 85.6%
+ step 26300 avg cost 0.2115 train acc 85.6%
+ step 26400 avg cost 0.2110 train acc 85.6%
+ step 26500 avg cost 0.2107 train acc 85.6%
+ step 26600 avg cost 0.2104 train acc 85.7%
+ step 26700 avg cost 0.2102 train acc 85.7%
+ step 26800 avg cost 0.2100 train acc 85.7%
+ step 26900 avg cost 0.2097 train acc 85.7%
+ step 27000 avg cost 0.2096 train acc 85.7%
+ step 27100 avg cost 0.2093 train acc 85.8%
+ step 27200 avg cost 0.2088 train acc 85.8%
+ step 27300 avg cost 0.2083 train acc 85.8%
+ step 27400 avg cost 0.2080 train acc 85.9%
+ step 27500 avg cost 0.2078 train acc 85.9%
+ step 27600 avg cost 0.2075 train acc 85.9%
+ step 27700 avg cost 0.2073 train acc 85.9%
+ step 27800 avg cost 0.2071 train acc 85.9%
+ step 27900 avg cost 0.2068 train acc 86.0%
+ step 28000 avg cost 0.2066 train acc 86.0%
+epoch 0 avg cost 0.2066
+test acc 96.0% on 200 images

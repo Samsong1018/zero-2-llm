@@ -1,0 +1,68 @@
+ 2026-11-07
+Current Settings:
+Block Size: 3
+Batch size: 32
+Steps: 200000
+Hidden Layer: 200
+Embedding Dimension: 10
+
+Training loss: 2.1284374655503235
+Dev loss: 2.173755953117417
+Test loss: 2.1695784872360213
+
+20 Generated Names: 
+zen
+arsis
+heub
+yayah
+kasceeya
+alago
+ameenes
+jemarlailyn
+rawik
+shrollia
+micio
+zyas
+mekmarion
+naniel #:D
+paisesly
+wailaylea
+harleiah
+zylondecclariyel # Let me know if you name your kid this
+ran
+dae
+
+
+ 2026-11-07
+Current Settings:
+Block Size: 3
+Batch size: 32
+Steps: 200000
+Hidden Layer: 200
+Embedding Dimension: 10
+
+Training loss: 2.13767876379072
+Dev loss: 2.1803756401692995
+Test loss: 2.1797962309984125
+
+20 Generated Names: 
+vik
+kamy
+elah
+ayria
+malyelis
+ici
+lits
+bearaina
+vayna
+zamustun
+nefo
+nen
+khah
+ash
+nuz
+kaerisson
+miramary
+nikaylyn
+den
+sarijahlin

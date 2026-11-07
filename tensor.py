@@ -11,7 +11,6 @@ def _unbroadcast(grad, shape):
 
     return grad
 
-
 class Tensor:
     def __init__(self, data, _children=(), _op=''):
         self.data = np.array(data, dtype=np.float64)
@@ -19,6 +18,10 @@ class Tensor:
         self._op = _op
         self._backward = lambda: None
         self.grad = np.zeros_like(self.data)
+
+    @property
+    def shape(self):
+        return self.data.shape
 
     def __repr__(self):
        return f"Tensor(data={self.data})"
@@ -48,7 +51,12 @@ class Tensor:
     
     def __rmul__(self, other):
         return self * other
- 
+
+    def __truediv__(self, other):
+        out = self * other**-1
+
+        return out
+
     def __matmul__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         out = Tensor(self.data @ other.data, (self, other), '@')
@@ -89,16 +97,80 @@ class Tensor:
     def __rsub__(self, other): 
         return other + (-self)
 
-    def sum(self):
-        out = Tensor(np.sum(self.data), (self, ), 'sum')
-        
+    def sum(self, axis=None, keepdims=False):
+        out = Tensor(np.sum(self.data, axis=axis, keepdims=keepdims), (self,), 'sum')
         def _backward():
-            self.grad += np.ones_like(self.data) * out.grad
+            g = out.grad
+            if axis is not None and not keepdims:
+                g = np.expand_dims(g, axis)
+            self.grad += np.ones_like(self.data) * g
+        out._backward = _backward
+        return out
+
+
+    def exp(self):
+        e = np.exp(self.data)
+        out = Tensor(e, (self,), 'exp')
+        def _backward():
+            self.grad += e * out.grad
+        out._backward = _backward
+        return out
+
+    def log(self):
+        out = Tensor(np.log(self.data), (self,), 'log')
+        def _backward():
+            self.grad += (1 / self.data) * out.grad
         out._backward = _backward
         return out
 
     def mean(self):
         return self.sum() * (1 /  self.data.size)
+
+    def tanh(self):
+        n = self.data
+        t = np.tanh(self.data)
+        out = Tensor(t, (self, ), 'tanh')
+
+        def _backward():
+            self.grad += (1-t**2) * out.grad
+        out._backward = _backward
+        return out
+
+    @staticmethod
+    def randn(*shape):
+        if len(shape) == 1 and isinstance(shape[0], tuple):
+            shape = shape[0]
+        return Tensor(np.random.randn(*shape))
+
+    def __getitem__(self, idx):
+        def unwrap(i):
+            return i.data.astype(int) if isinstance(i, Tensor) else i
+        idx = tuple(unwrap(i) for i in idx) if isinstance(idx, tuple) else unwrap(idx)
+        out = Tensor(self.data[idx], (self,), 'index')
+        def _backward():
+            np.add.at(self.grad, idx, out.grad)
+        out._backward = _backward
+        return out
+
+    def view(self, *shape):
+        out = Tensor(self.data.reshape(*shape), (self,), 'view')
+        def _backward():
+            self.grad += out.grad.reshape(self.data.shape)
+        out._backward = _backward
+        return out
+
+    def cross_entropy(self, targets):
+        t = targets.data.astype(int) if isinstance(targets, Tensor) else np.asarray(targets, dtype=int)
+        n, c = self.data.shape
+        shifted = self.data - self.data.max(axis=1, keepdims=True)
+        logp = shifted - np.log(np.exp(shifted).sum(axis=1, keepdims=True))
+        probs = np.exp(logp)
+        out = Tensor(-logp[np.arange(n), t].mean(), (self, ), 'cross_entropy')
+
+        def _backward():
+            self.grad += (probs - np.eye(c)[t]) / n * out.grad
+        out._backward = _backward
+        return out
 
     def backward(self):
         topo = []
