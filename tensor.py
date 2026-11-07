@@ -123,8 +123,17 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def mean(self):
-        return self.sum() * (1 /  self.data.size)
+    def mean(self, axis=None, keepdims=False):
+        n = self.data.size if axis is None else self.data.shape[axis]
+        out = Tensor(np.mean(self.data, axis=axis, keepdims=keepdims), (self,), 'mean')
+
+        def _backward():
+            g = out.grad
+            if axis is not None and not keepdims:
+                g = np.expand_dims(g, axis)
+            self.grad += g / n
+        out._backward = _backward
+        return out
 
     def tanh(self):
         n = self.data
@@ -137,10 +146,10 @@ class Tensor:
         return out
 
     @staticmethod
-    def randn(*shape):
+    def randn(*shape, scale=1):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        return Tensor(np.random.randn(*shape))
+        return Tensor(np.random.randn(*shape) * scale)
 
     def __getitem__(self, idx):
         def unwrap(i):
@@ -169,6 +178,30 @@ class Tensor:
 
         def _backward():
             self.grad += (probs - np.eye(c)[t]) / n * out.grad
+        out._backward = _backward
+        return out
+
+    def var(self, axis=None, keepdims=False, correction=1):
+        n = self.data.size if axis is None else self.data.shape[axis]
+        diff = self.data - self.data.mean(axis=axis, keepdims=True)
+        v = (diff**2).sum(axis=axis, keepdims=True) / (n - correction)
+        out = Tensor(v if keepdims else np.squeeze(v, axis=axis), (self,), 'var')
+
+        def _backward():
+            g = out.grad.reshape(v.shape)
+            self.grad += g * 2 * diff / (n - correction)
+        out._backward = _backward
+        return out
+    
+    def std(self, axis=None, keepdims=False, correction=1, eps=0.0):
+        n = self.data.size if axis is None else self.data.shape[axis]
+        diff = self.data - self.data.mean(axis=axis, keepdims=True)
+        s = np.sqrt((diff**2).sum(axis=axis, keepdims=True) / (n - correction) + eps)
+        out = Tensor(s if keepdims else np.squeeze(s, axis=axis), (self,), 'std')
+
+        def _backward():
+            g = out.grad.reshape(s.shape)
+            self.grad += g * diff / ((n - correction) * s)
         out._backward = _backward
         return out
 

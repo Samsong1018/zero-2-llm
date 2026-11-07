@@ -1,3 +1,7 @@
+"""
+This is for part 2 of his makemore, Ill continue with part 3 in a different file
+"""
+
 import json, sys, os, string, random
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
