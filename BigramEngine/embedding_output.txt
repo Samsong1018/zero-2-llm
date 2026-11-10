@@ -66,3 +66,147 @@ miramary
 nikaylyn
 den
 sarijahlin
+
+
+
+ 2026-11-07
+Current Settings:
+Block Size: 3
+Batch size: 32
+Steps: 200000
+Hidden Layer: 200
+Embedding Dimension: 10
+
+Training loss: 3.205851970959784
+Dev loss: 3.224981490932877
+Test loss: 3.1838099365180708
+
+20 Generated Names: 
+abellandia
+nati
+eilluirmi
+baybella
+daneeheeira
+san
+aran
+sha
+kan
+naydifa
+alan
+ahmaqibhi
+ana
+cara
+aua
+da
+anavalreu
+chazynn
+kaizeo
+hnoy
+
+
+ 2026-11-09
+Improved Version (part three)
+Current Settings:
+Block Size: 3
+Batch size: 32
+Steps: 200000
+Hidden Layer: 200
+Embedding Dimension: 10
+
+Training loss: 2.036965796665509
+Dev loss: 2.103070920099082
+Test loss: 2.1032825065510656
+
+20 Generated Names: 
+auria
+mairanzie
+keymia
+nia
+jyah
+anna
+merand
+yasmrie
+nie
+rhee
+chiell
+mairon
+athz
+juria
+cris
+kyla
+kie
+bren
+grachidah
+shravier
+
+
+ 2026-11-09
+Improved Version (part three)
+Current Settings:
+Block Size: 3
+Batch size: 32
+Steps: 200000
+Hidden Layer: 200
+Embedding Dimension: 10
+
+Training loss: 2.0706522159112417
+Dev loss: 2.1130572190965
+Test loss: 2.1081063245254237
+
+20 Generated Names: 
+kahmente
+jakentyn
+glevellowonston
+demileen
+avarle
+hanza
+arascotlyn
+nor
+darisharoleigh
+delyne
+farzlyn
+yoveck
+rutten
+bestyn
+samay
+yaz
+chya
+bryyreelissey
+jabeth
+sarun
+
+
+ 2026-11-09
+Improved Version (part three)
+Current Settings:
+Block Size: 3
+Batch size: 32
+Steps: 200000
+Hidden Layer: 200
+Embedding Dimension: 10
+
+Training loss: 2.0729860347399973
+Dev loss: 2.113998965963296
+Test loss: 2.111979741447781
+
+20 Generated Names: 
+cniya
+koban
+xaa
+marious
+ellion
+adreaviovaling
+ana
+jamiliana
+jwan
+roya
+keillit
+normin
+ter
+jaxme
+hela
+lucion
+wesdu
+gawsen
+komeralle
+dum

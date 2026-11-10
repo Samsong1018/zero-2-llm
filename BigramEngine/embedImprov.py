@@ -10,7 +10,7 @@ from mlp import MLP
 import numpy as np
 from datetime import date
 
-BLOCK_SIZE = 3 # Context window
+BLOCK_SIZE = 3 # Context window (how many characters are considered when deciding next)
 LR=0.2
 BATCH_SIZE = 32
 STEPS = 200000
@@ -54,13 +54,17 @@ Xte, Yte = build_dataset(words[n2:])
 
 C = Tensor.randn((27, EMBEDDING_DIMENSIONS))
 
-W1 = Tensor.randn((EMBEDDING_DIMENSIONS*BLOCK_SIZE, HIDDEN_LAYER))
-b1 = Tensor.randn(HIDDEN_LAYER)
+W1 = Tensor.randn((EMBEDDING_DIMENSIONS*BLOCK_SIZE, HIDDEN_LAYER)) * (5/3)/(EMBEDDING_DIMENSIONS*BLOCK_SIZE)**0.5
+#b1 = Tensor.randn(HIDDEN_LAYER) * 0.01 Because of normalization b1 gets subtracted and creates a gradient of zero
+W2 = Tensor.randn((HIDDEN_LAYER, 27)) * 0.1
+b2 = Tensor.randn(27) * 0
 
-W2 = Tensor.randn((HIDDEN_LAYER, 27))
-b2 = Tensor.randn(27)
+bngain = Tensor(np.ones((1, HIDDEN_LAYER)))
+bnbias = Tensor(np.zeros((1, HIDDEN_LAYER)))
+bnmean_running = np.zeros((1, HIDDEN_LAYER))
+bnstd_running = np.ones((1, HIDDEN_LAYER))
 
-parameters = [W1, W2, b1, b2, C]
+parameters = [W1, W2, b2, C, bngain, bnbias]
 
 #lre = np.linspace(-3, -1, STEPS)
 #lrs = 10**lre
@@ -68,13 +72,22 @@ parameters = [W1, W2, b1, b2, C]
 lr = LR
 
 for i in range(STEPS):
+    lr = 0.1 if i < 100000 else 0.01
+
     # define mini batch
     ix = np.random.randint(0, Xtr.shape[0], (BATCH_SIZE, ))
 
     # forward pass
     emb = C[Xtr[ix]]
-    h = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1 + b1
-    h = h.tanh()
+    embcat = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1# + b1
+    bnmeani = embcat.mean(0, keepdims=True)
+    bnstdi = embcat.std(0, keepdims=True)
+    hpreact = bngain * (embcat - bnmeani) / bnstdi + bnbias
+
+    bnmean_running = 0.999*bnmean_running + 0.001*bnmeani.data
+    bnstd_running = 0.999*bnstd_running + 0.001*bnstdi.data
+
+    h = hpreact.tanh()
     logits = h @ W2 + b2
     loss = logits.cross_entropy(Ytr[ix])
 
@@ -84,25 +97,26 @@ for i in range(STEPS):
 
     loss.backward()
 
-    lr = 0.1 if i < 100000 else 0.01
-    if i % 5000 == 0:
-        print(loss.data)
-
     for p in parameters:
         p.data -= lr*p.grad
+
+    if i % 5000 == 0:
+        print(loss.data)
 
 # Evaluate
 
 with open('BigramEngine/embedding_output.txt', 'a') as file:
 
     file.write(f'\n\n {date.today()}\n')
+    file.write("Improved Version (part three)\n")
     file.write(f'Current Settings:\nBlock Size: {BLOCK_SIZE}\n')
     file.write(f'Batch size: {BATCH_SIZE}\nSteps: {STEPS}\n')
     file.write(f'Hidden Layer: {HIDDEN_LAYER}\nEmbedding Dimension: {EMBEDDING_DIMENSIONS}\n\n')
 
     emb = C[Xtr]
-    h = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1 + b1
-    h = h.tanh()
+    embcat = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1# + b1
+    hpreact = bngain * (embcat - bnmean_running) / bnstd_running + bnbias
+    h = hpreact.tanh()
     logits = h @ W2 + b2
     loss = logits.cross_entropy(Ytr)
 
@@ -110,8 +124,9 @@ with open('BigramEngine/embedding_output.txt', 'a') as file:
     file.write(f'Training loss: {loss.data}\n')
 
     emb = C[Xdev]
-    h = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1 + b1
-    h = h.tanh()
+    embcat = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1# + b1
+    hpreact = bngain * (embcat - bnmean_running) / bnstd_running + bnbias
+    h = hpreact.tanh()
     logits = h @ W2 + b2
     loss = logits.cross_entropy(Ydev)
 
@@ -119,8 +134,9 @@ with open('BigramEngine/embedding_output.txt', 'a') as file:
     file.write(f'Dev loss: {loss.data}\n')
 
     emb = C[Xte]
-    h = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1 + b1
-    h = h.tanh()
+    embcat = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1# + b1
+    hpreact = bngain * (embcat - bnmean_running) / bnstd_running + bnbias
+    h = hpreact.tanh()
     logits = h @ W2 + b2
     loss = logits.cross_entropy(Yte)
 
@@ -135,8 +151,9 @@ with open('BigramEngine/embedding_output.txt', 'a') as file:
         context = [0] * BLOCK_SIZE
         while True:
             emb = C[np.array([context])]
-            h = emb.view((1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1 + b1
-            h = h.tanh()
+            embcat = emb.view((-1, EMBEDDING_DIMENSIONS*BLOCK_SIZE)) @ W1# + b1
+            hpreact = bngain * (embcat - bnmean_running) / bnstd_running + bnbias
+            h = hpreact.tanh()
             logits = (h @ W2 + b2).data
 
             counts = np.exp(logits - logits.max(axis=1, keepdims=True))
