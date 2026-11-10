@@ -1,5 +1,14 @@
 import numpy as np
-import math
+from contextlib import contextmanager
+
+@contextmanager
+def no_grad():
+    prev = Tensor.grad_enabled
+    Tensor.grad_enabled = False
+    try:
+        yield                    # the with-block runs here
+    finally:
+        Tensor.grad_enabled = prev
 
 def _unbroadcast(grad, shape):
     while grad.ndim > len(shape):
@@ -10,14 +19,14 @@ def _unbroadcast(grad, shape):
             grad = grad.sum(axis, keepdims=True)
 
     return grad
-
 class Tensor:
+    grad_enabled = True
     def __init__(self, data, _children=(), _op=''):
-        self.data = np.array(data, dtype=np.float64)
-        self._prev = set(_children)
+        self.data = np.asarray(data, dtype=np.float32)
+        self._prev = tuple(_children) if self.grad_enabled else ()
         self._op = _op
         self._backward = lambda: None
-        self.grad = np.zeros_like(self.data)
+        self.grad = None
 
     @property
     def shape(self):
@@ -26,14 +35,24 @@ class Tensor:
     def __repr__(self):
        return f"Tensor(data={self.data})"
 
+    def _set_backward(self, fn):
+        if Tensor.grad_enabled:
+            self._backward = fn
+
+    def _accum(self, g):
+        if self.grad is None:
+            self.grad = np.broadcast_to(g, self.data.shape).copy()
+        else:
+            self.grad += g
+
     def __add__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         out = Tensor(self.data + other.data, (self, other), '+')
 
         def _backward():
-            self.grad += _unbroadcast(out.grad, self.data.shape)
-            other.grad += _unbroadcast(out.grad, other.data.shape)
-        out._backward = _backward
+            self._accum(_unbroadcast(out.grad, self.data.shape))
+            other._accum(_unbroadcast(out.grad, other.data.shape))
+        out._set_backward(_backward)
         return out
 
     def __radd__(self, other):
@@ -44,9 +63,9 @@ class Tensor:
         out = Tensor(self.data * other.data, (self, other), '*')
 
         def _backward():
-            self.grad += _unbroadcast((other.data * out.grad), self.data.shape)
-            other.grad += _unbroadcast((self.data * out.grad), other.data.shape)
-        out._backward = _backward
+            self._accum(_unbroadcast((other.data * out.grad), self.data.shape))
+            other._accum(_unbroadcast((self.data * out.grad), other.data.shape))
+        out._set_backward(_backward)
         return out
     
     def __rmul__(self, other):
@@ -62,20 +81,20 @@ class Tensor:
         out = Tensor(self.data @ other.data, (self, other), '@')
 
         def _backward():
-            self.grad += out.grad @ other.data.T
-            other.grad += self.data.T @ out.grad
-        out._backward = _backward
+            self._accum(out.grad @ other.data.T)
+            other._accum(self.data.T @ out.grad)
+        out._set_backward(_backward)
         return out
 
     def zero_grad(self):
-        self.grad = np.zeros_like(self.data)
+        self.grad = None
 
     def sigmoid(self):
         s = 1 / (1+np.exp(-self.data))
         out = Tensor(s, (self, ), 'sig')
         def _backward():
-            self.grad += s * (1-s) * out.grad
-        out._backward = _backward
+            self._accum(s * (1-s) * out.grad)
+        out._set_backward(_backward)
         return out
     
     def __pow__(self, other):
@@ -83,8 +102,8 @@ class Tensor:
         out = Tensor(self.data**other, (self, ), f'**{other}')
 
         def _backward():
-            self.grad += other * self.data**(other-1) * out.grad
-        out._backward = _backward
+            self._accum(other * self.data**(other-1) * out.grad)
+        out._set_backward(_backward)
 
         return out
 
@@ -103,8 +122,8 @@ class Tensor:
             g = out.grad
             if axis is not None and not keepdims:
                 g = np.expand_dims(g, axis)
-            self.grad += np.ones_like(self.data) * g
-        out._backward = _backward
+            self._accum(np.broadcast_to(g, self.data.shape))
+        out._set_backward(_backward)
         return out
 
 
@@ -112,15 +131,15 @@ class Tensor:
         e = np.exp(self.data)
         out = Tensor(e, (self,), 'exp')
         def _backward():
-            self.grad += e * out.grad
-        out._backward = _backward
+            self._accum(e * out.grad)
+        out._set_backward(_backward)
         return out
 
     def log(self):
         out = Tensor(np.log(self.data), (self,), 'log')
         def _backward():
-            self.grad += (1 / self.data) * out.grad
-        out._backward = _backward
+            self._accum((1 / self.data) * out.grad)
+        out._set_backward(_backward)
         return out
 
     def mean(self, axis=None, keepdims=False):
@@ -131,18 +150,17 @@ class Tensor:
             g = out.grad
             if axis is not None and not keepdims:
                 g = np.expand_dims(g, axis)
-            self.grad += g / n
-        out._backward = _backward
+            self._accum(g / n)
+        out._set_backward(_backward)
         return out
 
     def tanh(self):
-        n = self.data
         t = np.tanh(self.data)
         out = Tensor(t, (self, ), 'tanh')
 
         def _backward():
-            self.grad += (1-t**2) * out.grad
-        out._backward = _backward
+            self._accum((1-t**2) * out.grad)
+        out._set_backward(_backward)
         return out
 
     @staticmethod
@@ -157,15 +175,17 @@ class Tensor:
         idx = tuple(unwrap(i) for i in idx) if isinstance(idx, tuple) else unwrap(idx)
         out = Tensor(self.data[idx], (self,), 'index')
         def _backward():
+            if self.grad is None:
+                self.grad = np.zeros_like(self.data)
             np.add.at(self.grad, idx, out.grad)
-        out._backward = _backward
+        out._set_backward(_backward)
         return out
 
     def view(self, *shape):
         out = Tensor(self.data.reshape(*shape), (self,), 'view')
         def _backward():
-            self.grad += out.grad.reshape(self.data.shape)
-        out._backward = _backward
+            self._accum(out.grad.reshape(self.data.shape))
+        out._set_backward(_backward)
         return out
 
     def cross_entropy(self, targets):
@@ -177,8 +197,10 @@ class Tensor:
         out = Tensor(-logp[np.arange(n), t].mean(), (self, ), 'cross_entropy')
 
         def _backward():
-            self.grad += (probs - np.eye(c)[t]) / n * out.grad
-        out._backward = _backward
+            d = probs.copy()
+            d[np.arange(n), t] -= 1
+            self._accum(d / n * out.grad)
+        out._set_backward(_backward)
         return out
 
     def var(self, axis=None, keepdims=False, correction=1):
@@ -189,8 +211,8 @@ class Tensor:
 
         def _backward():
             g = out.grad.reshape(v.shape)
-            self.grad += g * 2 * diff / (n - correction)
-        out._backward = _backward
+            self._accum(g * 2 * diff / (n - correction))
+        out._set_backward(_backward)
         return out
     
     def std(self, axis=None, keepdims=False, correction=1, eps=0.0):
@@ -201,8 +223,8 @@ class Tensor:
 
         def _backward():
             g = out.grad.reshape(s.shape)
-            self.grad += g * diff / ((n - correction) * s)
-        out._backward = _backward
+            self._accum(g * diff / ((n - correction) * s))
+        out._set_backward(_backward)
         return out
 
     def backward(self):
@@ -220,3 +242,8 @@ class Tensor:
 
         for i in reversed(topo):
             i._backward()
+        
+        # Optimization - break closure tensor cycles so the graph fress
+        for i in topo:
+            i._backward = lambda: None
+            i._prev = ()

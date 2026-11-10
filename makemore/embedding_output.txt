@@ -210,3 +210,75 @@ wesdu
 gawsen
 komeralle
 dum
+
+
+ 2026-11-10
+Final Version (uses classes)
+Current Settings:
+Block Size: 3
+Batch size: 32
+Steps: 200000
+Hidden Layer: 100
+Embedding Dimension: 10
+
+Training loss: 1.9822997138775043
+Dev loss: 2.0941489290310833
+Test loss: 2.0914674472265595
+
+20 Generated Names: 
+azyne
+don
+celisson
+brock
+mahkaros
+matchelsyn
+demilsabrigh
+don
+quinkleea
+wesleen
+treline
+cariedalika
+novalen
+ader
+janny
+carleigh
+zaydyn
+stiavalexi
+elwinsoleton
+lee
+
+
+ 2026-11-10
+Final Version (uses classes)
+Current Settings:
+Block Size: 3
+Batch size: 256
+Steps: 50000
+Hidden Layer: 100
+Embedding Dimension: 10
+
+Training loss: 1.9369416143859925
+Dev loss: 2.0889646347141033
+Test loss: 2.088691108028459
+
+20 Generated Names: 
+sedri
+kayraj
+analaylino
+mazen*
+leia*
+zavieremiahrake
+maclynnah
+fitzy
+ilidahlan
+eston*
+cai*
+rustyn*
+zantister
+kema
+rayann*
+alice
+lir
+zaileelaniyan
+taleslietrose
+kalmin
