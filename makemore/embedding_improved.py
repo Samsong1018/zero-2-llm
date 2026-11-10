@@ -105,7 +105,7 @@ for i in range(STEPS):
 
 # Evaluate
 
-with open('BigramEngine/embedding_output.txt', 'a') as file:
+with open(os.path.join(HERE, "embedding_output.txt"), 'a') as file:
 
     file.write(f'\n\n {date.today()}\n')
     file.write("Improved Version (part three)\n")

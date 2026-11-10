@@ -6,7 +6,7 @@ I plan to apply this to different projects in the future.
 
 ## Usage
 ### Bigram Engine with Embeddings
-This follows part two of the makemore series, but using my tensors and numpy instead of torch functions. It's in the same folder as the bigram guesser, but it isn't a bigram model anymore: it predicts the next character from a context window of three characters and uses embeddings, which creates more human sounding names than the single character context seen in BigramEngine/main.py. The bigram model sees each character as a one-hot vector, while the new one looks each character up in a learned embedding table and gets a multidimensional vector for it. It includes multiple settings at the top.
+This follows part two of the makemore series, but using my tensors and numpy instead of torch functions. It's in the same folder as the bigram guesser, but it isn't a bigram model anymore: it predicts the next character from a context window of three characters and uses embeddings, which creates more human sounding names than the single character context seen in makemore/bigram.py. The bigram model sees each character as a one-hot vector, while the new one looks each character up in a learned embedding table and gets a multidimensional vector for it. It includes multiple settings at the top.
 ```
 BLOCK_SIZE = 3 # size of the context window (three characters)
 EMBEDDING_DIMENSIONS = 10 # how many dimensions each character's embedding has
@@ -14,7 +14,7 @@ HIDDEN_LAYER = 300 # how many neurons the hidden layer contains
 BATCH_SIZE = 32 # the batch size per optimization step
 STEPS = 200000 # how many optimization steps are taken
 ```
-The learning rate is 0.1 for the first 100,000 steps and 0.01 after that. Each run appends its settings, train/dev/test loss, and 20 generated names to BigramEngine/embedding_output.txt.
+The learning rate is 0.1 for the first 100,000 steps and 0.01 after that. Each run appends its settings, train/dev/test loss, and 20 generated names to makemore/embedding_output.txt.
 
 Multiple Tensor features were added as well: the shape property, so you can call Tensor.shape instead of Tensor.data.shape; division, exp, and log; tanh that works on whole arrays, unlike the Value class; and sum, which now takes axis and keepdims similar to pytorch. The Tensor now has a randn function that returns a Tensor of random values in the given shape (either separate numbers or a tuple). Indexing now passes gradients back, which is what lets the embedding table C[X] learn. The view function was implemented to reshape data for processing, and finally there's a cross entropy that uses log softmax to avoid overflowing.
 
