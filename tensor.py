@@ -82,7 +82,9 @@ class Tensor:
 
         def _backward():
             self._accum(out.grad @ other.data.T)
-            other._accum(self.data.T @ out.grad)
+            x2d = self.data.reshape(-1, self.data.shape[-1])
+            g2d = out.grad.reshape(-1, out.grad.shape[-1])
+            other._accum(x2d.T @ g2d)
         out._set_backward(_backward)
         return out
 
@@ -224,6 +226,27 @@ class Tensor:
         def _backward():
             g = out.grad.reshape(s.shape)
             self._accum(g * diff / ((n - correction) * s))
+        out._set_backward(_backward)
+        return out
+
+    def batch_norm(self, gamma, beta, eps=1e-5, axes=(0,)):
+        X = self.data
+        assert X.ndim - len(axes) == 1, f"batch_norm on {X.ndim}D input must reduce over all but the last dim, got axes={axes}"
+        N = int(np.prod([X.shape[a] for a in axes]))
+        mu = X.mean(axes, keepdims=True)
+        var = ((X - mu)**2).sum(axes, keepdims=True) / (N - 1)
+        inv = 1 / np.sqrt(var + eps)
+        xhat = (X - mu) * inv
+        out = Tensor(gamma.data * xhat + beta.data, (self, gamma, beta), 'batchnorm')
+
+        def _backward():
+            d = out.grad
+            gamma._accum(_unbroadcast(d * xhat, gamma.data.shape))
+            beta._accum(_unbroadcast(d, beta.data.shape))
+            dsum = d.sum(axes, keepdims=True)
+            dxsum = (d * xhat).sum(axes, keepdims=True)
+            self._accum(gamma.data * inv / N * (N*d - dsum - N/(N-1) * xhat * dxsum))
+
         out._set_backward(_backward)
         return out
 

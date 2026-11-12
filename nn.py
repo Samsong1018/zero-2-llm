@@ -28,18 +28,14 @@ class BatchNorm1d:
         self.running_var = np.ones(dim)
 
     def __call__(self, x):
+        axes = tuple(range(x.data.ndim - 1))   # (0,) for 2D, (0, 1) for 3D
         if self.training:
-            xmean = x.mean(0, keepdims=True)
-            xvar = x.var(0, keepdims=True, correction=1)
+            out = x.batch_norm(self.gamma, self.beta, self.eps, axes)
+            self.running_mean = (1-self.momentum) * self.running_mean + self.momentum * x.data.mean(axes)
+            self.running_var  = (1-self.momentum) * self.running_var  + self.momentum * x.data.var(axes, ddof=1)
         else:
-            xmean = self.running_mean
-            xvar = self.running_var
-        xhat = (x - xmean) / (xvar + self.eps)**0.5
-        out = self.gamma * xhat + self.beta
-        if self.training:
-            with no_grad():
-                self.running_mean = (1-self.momentum) * self.running_mean + self.momentum * xmean.data
-                self.running_var = (1-self.momentum) * self.running_var + self.momentum * xvar.data
+            xhat = (x - self.running_mean) / np.sqrt(self.running_var + self.eps)
+            out = self.gamma * xhat + self.beta
         return out
 
     def parameters(self):

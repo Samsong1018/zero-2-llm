@@ -282,3 +282,76 @@ lir
 zaileelaniyan
 taleslietrose
 kalmin
+
+
+ 2026-11-11
+Final Version (uses classes)
+Current Settings:
+Block Size: 3
+Batch size: 256
+Steps: 50000
+Hidden Layer: 100
+Embedding Dimension: 10
+
+Training loss: 1.9557555449653536
+Dev loss: 2.0786412547845448
+Test loss: 2.07615949431294
+
+20 Generated Names: 
+tan
+barrowen
+joss*
+samatson
+sevan*
+sage*
+kenslee*
+dana*
+abi
+dalilia
+niah*
+kembrie
+ramyjaelain
+vasir
+shakira*
+haleyad
+everiniya
+julianavincarter
+aaraiya
+jainavin
+
+
+
+ 2026-11-11
+Final Version (uses classes)
+Current Settings:
+Block Size: 3
+Batch size: 256
+Steps: 50000
+Hidden Layer: 100
+Embedding Dimension: 10
+
+Training loss: 1.9566424717077402
+Dev loss: 2.075826244674174
+Test loss: 2.081293553491908
+
+20 Generated Names: 
+laker*
+jerrin*
+ana*
+ryely
+dan*
+suzett
+jah*
+mikkenni
+almatha
+nathaela
+janelinayanah
+tavia*
+enryla
+ansley*
+keilabharlos
+rooklyn
+kailee*
+torleigh
+juneliazay
+dmitrioni

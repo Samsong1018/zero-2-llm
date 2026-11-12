@@ -54,11 +54,11 @@ Xte, Yte = build_dataset(words[n2:])
 
 C = Tensor.randn((vocab_size, EMBEDDING_DIMENSIONS))
 layers = [
-    nn.Linear(EMBEDDING_DIMENSIONS*BLOCK_SIZE, HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER), nn.Tanh(),
+    nn.Linear(EMBEDDING_DIMENSIONS*BLOCK_SIZE, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
+    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
+    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
+    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
+    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
     nn.Linear(HIDDEN_LAYER, vocab_size)
 ]
 
@@ -106,6 +106,7 @@ for i in range(STEPS):
 
 def evaluate(X, Y):
     with no_grad():
+
         total = 0.0
         for start in range(0, len(X), CHUNK_SIZE):
             slicex = X[start:start+CHUNK_SIZE]
@@ -123,6 +124,9 @@ def evaluate(X, Y):
         return (total / len(X))
 
 word_set = set(words[:n1])
+
+for layer in layers:
+    layer.training = False
 
 with open(os.path.join(HERE, "embedding_output.txt"), 'a') as file:
 
