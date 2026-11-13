@@ -1,4 +1,5 @@
 import json, sys, os
+from cube import SOLVED, R, Rprime, R2, F, Fprime, F2, U, Uprime, U2, MOVES, MOVE_NAMES, INV, STOP, build_model
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 from tensor import Tensor, no_grad
@@ -6,8 +7,6 @@ from collections import deque
 import nn
 import numpy as np
 
-EMBEDDING_DIMENSIONS = 20
-HIDDEN_LAYER = 512
 BATCH_SIZE=256
 LR = 1e-3
 CHUNK_SIZE = 10000
@@ -18,69 +17,11 @@ TOTAL_TESTS = 1000
 
 # Data set
 
-SOLVED = np.repeat(np.arange(6), 4).astype(np.int8)
-
-# Right
-R = np.arange(24)
-R[4], R[5], R[7], R[6] = 6, 4, 5, 7
-R[1], R[3] = 9, 11
-R[22], R[20] = 1, 3
-R[15], R[13] = 20, 22
-R[11], R[9] = 15, 13
-
-Rprime = np.argsort(R)
-R2 = R[R]
-
-# Front
-
-F = np.arange(24)
-F[8], F[9], F[11], F[10] = 10, 8, 9, 11
-F[4], F[6] = 2, 3
-F[13], F[12] = 4, 6
-F[19], F[17] = 13, 12
-F[2], F[3] = 19, 17
-
-Fprime = np.argsort(F)
-F2 = F[F]
-
-# Up
-U = np.arange(24)
-U[0], U[1], U[3], U[2] = 2, 0, 1, 3
-U[4], U[5] = 20, 21
-U[8], U[9] = 4, 5
-U[16], U[17] = 8, 9
-U[20], U[21] = 16, 17
-
-Uprime = np.argsort(U)
-U2 = U[U]
-
-# index = move label for the network, 9 = STOP
-MOVES = [R, Rprime, R2, U, Uprime, U2, F, Fprime, F2]
-MOVE_NAMES = ["R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2"]
-
 # Build out all possible permutations as dataset
 
-# TODO save dataset to optomize
-INV = [1, 0, 2, 4, 3, 5, 7, 6, 8]   # undo move for each index in MOVES
-STOP = 9
+data = np.load(os.path.join(HERE, "dataset.npz"))
+X, Y, D = data["X"], data["Y"], data["D"]
 
-seen = {SOLVED.tobytes(): (0, STOP)}   # state -> (distance, label)
-q = deque([SOLVED]); counts = {}
-while q:
-    x = q.popleft(); d, _ = seen[x.tobytes()]; counts[d] = counts.get(d, 0) + 1
-    for i, p in enumerate(MOVES):
-        y = x[p]; k = y.tobytes()
-        if k not in seen:
-            seen[k] = (d + 1, INV[i]); q.append(y)
-print(len(seen), [counts[i] for i in sorted(counts)])
-
-keys = list(seen.keys())
-X = np.frombuffer(b"".join(keys), dtype=SOLVED.dtype).reshape(-1, 24)  # (N, 24) colors 0-5
-Y = np.array([seen[k][1] for k in keys])                                # (N,) labels 0-9
-D = np.array([seen[k][0] for k in keys])
-
-perm = np.random.permutation(len(X))
-X, Y, D = X[perm], Y[perm], D[perm]
 n1 = int(0.8*len(X))
 n2 = int(0.9*len(X))
 
@@ -92,19 +33,7 @@ BY_DEPTH = [np.where(Dtr == d)[0] for d in range(12)]
 
 # Model init
 
-model = nn.Sequential([
-    nn.Embedding(6, EMBEDDING_DIMENSIONS), nn.Flatten(24),
-    nn.Linear(24*EMBEDDING_DIMENSIONS, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, HIDDEN_LAYER, bias=False), nn.BatchNorm1d(HIDDEN_LAYER), nn.Tanh(),
-    nn.Linear(HIDDEN_LAYER, 10)
-])
+model = build_model()
 
 with no_grad():
     model.layers[-1].weight.data *= 0.1

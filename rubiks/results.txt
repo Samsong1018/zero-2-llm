@@ -1,0 +1,10 @@
+K (beam width) | d5  | d7  | d8  | d9  | d10 | d11
+1              | 90% | 74% | 33% | 24% | 17% | 9%
+10             | 100%| 99% | 97% | 83% | 63% | 48%
+50             | 100%| 100%| 99% | 100%| 99% | 94%
+200            | 100%| 100%| 100%| 100%| 100%| 100%
+
+K represents how many partial solutions the search keeps
+after each move. So, the more partial solutions you have
+the more likely it is for the net to get a solution on one
+of those solutions.
