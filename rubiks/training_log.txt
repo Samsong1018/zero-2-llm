@@ -71,3 +71,22 @@
 [ 8.39h] depth<=11 step  40000/130000: loss 0.8055 | LR: 0.001
 [ 8.54h] depth<=11 step  50000/130000: loss 0.8038 | LR: 0.001
 [ 8.69h] depth<=11 step  60000/130000: loss 0.6826 | LR: 0.001
+[ 8.85h] depth<=11 step  70000/130000: loss 0.7630 | LR: 0.001
+[ 9.01h] depth<=11 step  80000/130000: loss 0.6192 | LR: 0.001
+[ 9.15h] depth<=11 step  90000/130000: loss 0.7713 | LR: 0.00025
+[ 9.30h] depth<=11 step 100000/130000: loss 0.7327 | LR: 0.00025
+[ 9.44h] depth<=11 step 110000/130000: loss 0.6953 | LR: 0.00025
+[ 9.59h] depth<=11 step 120000/130000: loss 0.6323 | LR: 0.00025
+[ 9.74h] DONE depth<=11: loss 0.5939 | Success rate @ depth 11: 0.109
+[ 9.79h] FINAL success rate (all depths): 0.33
+[ 9.79h]   depth  1: 1.0
+[ 9.79h]   depth  2: 1.0
+[ 9.79h]   depth  3: 0.902
+[ 9.79h]   depth  4: 0.9
+[ 9.79h]   depth  5: 0.885
+[ 9.79h]   depth  6: 0.8
+[ 9.80h]   depth  7: 0.634
+[ 9.80h]   depth  8: 0.44
+[ 9.80h]   depth  9: 0.24
+[ 9.80h]   depth 10: 0.22
+[ 9.81h]   depth 11: 0.133
