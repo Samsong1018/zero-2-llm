@@ -35,6 +35,13 @@ class Tensor:
     def __repr__(self):
        return f"Tensor(data={self.data})"
 
+    def squeeze(self, axis):
+        out = Tensor(np.squeeze(self.data, axis=axis), (self,), 'squeeze')
+        def _backward():
+            self._accum(out.grad.reshape(self.data.shape))
+        out._set_backward(_backward)
+        return out
+
     def _set_backward(self, fn):
         if Tensor.grad_enabled:
             self._backward = fn

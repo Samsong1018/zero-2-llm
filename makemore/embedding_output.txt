@@ -355,3 +355,75 @@ kailee*
 torleigh
 juneliazay
 dmitrioni
+
+
+ 2026-11-12
+Final Version (uses classes)
+Current Settings:
+Block Size: 8
+Batch size: 256
+Steps: 50000
+Hidden Layer: 100
+Embedding Dimension: 10
+
+Training loss: 1.77103204567248
+Dev loss: 2.0238074304988594
+Test loss: 2.023743495481967
+
+20 Generated Names: 
+jaki*
+arazia
+aymell
+david*
+breer
+jood*
+khalena
+payce*
+angrye
+janyla*
+bobique
+yusyn
+anna*
+coda*
+rozellee
+taleyah*
+brecky
+khabeth
+zaelon
+kashae*
+
+
+ 2026-11-12
+Final Version (uses classes)
+Current Settings:
+Block Size: 8
+Batch size: 256
+Steps: 100000
+Hidden Layer: 128
+Embedding Dimension: 24
+
+Training loss: 1.7452781750354598
+Dev loss: 1.9989807493137854
+Test loss: 1.9988519845855086
+
+20 Generated Names: 
+jazlin*
+charlee*
+kawela
+sharumi
+lak
+beryn
+shamil
+kyekar
+larissa*
+wantelis
+omoni
+arrummi
+damyla*
+shylosi
+kaycee*
+juanly
+regyn
+madenime
+fir
+qayanna
