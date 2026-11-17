@@ -6,7 +6,7 @@
 #     os.environ["MLP_DEVICE"] = "gpu"
 #     from tensor import Tensor
 #
-# or from the shell:  MLP_DEVICE=gpu python3 GPT/gpt_shakespear.py
+# or from the shell:  MLP_DEVICE=gpu python3 GPT/Shakespear/gpt_shakespear.py
 
 import os
 import numpy

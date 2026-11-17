@@ -1,36 +1,28 @@
-import os, sys, math
+"""
+Run this file to sample my trained weights!
+Needs gpt_weights.npz, which gpt_shakespear.py saves while it trains.
+"""
+
+import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, ".."))
-# "cpu" or "gpu"; must be set before tensor/nn are imported. MLP_DEVICE=gpu in the shell overrides it.
-os.environ.setdefault("MLP_DEVICE", "gpu")
+sys.path.insert(0, os.path.join(HERE, "..", ".."))
+# "cpu" or "gpu"; must be set before tensor/nn are imported. MLP_DEVICE=cpu in the shell overrides it.
+os.environ.setdefault("MLP_DEVICE", "cpu")
 from tensor import Tensor, no_grad
 from backend import xp, to_numpy, DEVICE
 import numpy as np
 import nn
 
-# constants
-
+# must match the settings gpt_shakespear.py trained with, or the weights won't fit
 BLOCK_SIZE = 256
-BATCH_SIZE = 16
-MAX_ITERS = 15000
-EVAL_INTERVAL = 1000
-LR = 3e-4
-EVAL_ITERS = 100
 EMBEDDING_DIMENSIONS = 384
 N_HEAD = 6
 N_LAYER = 6
-DROPOUT = 0.2
-TRAIN_SPLIT = 0.9
+DROPOUT = 0.0 # only matters for training
 MAX_NEW_TOKENS = 500
-LOG_FILE = os.path.join(HERE, "training_log.txt")
 WEIGHTS_FILE = os.path.join(HERE, "gpt_weights.npz")
-PATIENCE = 3
-MIN_DELTA = 0.002
 
-best_val = float('inf')
-bad_evals = 0
-
-# load dataset
+# the vocab comes from the training text, so the ids line up with the weights
 with open(os.path.join(HERE, "input.txt"), 'r', encoding='utf-8') as f:
     text = f.read()
 
@@ -41,45 +33,6 @@ stoi = { ch:i for i,ch in enumerate(chars) }
 itos = { i:ch for i,ch in enumerate(chars) }
 encode = lambda s: [stoi[c] for c in s] # encoder string to int
 decode = lambda l: ''.join([itos[i] for i in l]) # decoder integers to string
-
-data = np.array(encode(text))
-
-# split to training dataset
-
-n = int(TRAIN_SPLIT*len(data))
-train_data = data[:n]
-val_data = data[n:]
-
-def get_batch(split):
-    split_data = train_data if split == "train" else val_data
-    ix = np.random.randint(0, len(split_data) - BLOCK_SIZE, size=BATCH_SIZE)
-    x = np.stack([split_data[i:i+BLOCK_SIZE] for i in ix])
-    y = np.stack([split_data[i+1:i+BLOCK_SIZE+1] for i in ix])
-    return x, y
-
-def estimate_loss():
-    with no_grad():
-        out = {}
-        nn.Dropout.training = False
-        for split in ['train', 'val']:
-            losses = np.zeros(EVAL_ITERS)
-            for k in range(EVAL_ITERS):
-                X, Y = get_batch(split)
-                _, loss = model(X, Y)
-                losses[k] = loss.item()
-            out[split] = losses.mean()
-        nn.Dropout.training = True
-        return out
-
-def log(line):
-    # print and append to the log file, so the run survives a closed terminal
-    print(line)
-    with open(LOG_FILE, "a") as file:
-        file.write(line + "\n")
-
-def save_weights():
-    # saved in model.parameters() order
-    np.savez(WEIGHTS_FILE, *[to_numpy(p.data) for p in model.parameters()])
 
 class Head:
     def __init__(self, n_emb, head_size, block_size, dropout):
@@ -172,10 +125,10 @@ class GPTLanguageModel:
         self.ln_f = nn.LayerNorm(n_emb)
         self.lm_head = nn.Linear(n_emb, vocab_size)
 
-    def __call__(self, idx, targets=None):
-        return self.forward(idx, targets)
+    def __call__(self, idx):
+        return self.forward(idx)
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx):
         T = idx.shape[1]
 
         tok_emb = self.token_embedding_table(idx)
@@ -183,17 +136,7 @@ class GPTLanguageModel:
         x = tok_emb + pos_emb
         x = self.blocks(x)
         x = self.ln_f(x)
-        logits = self.lm_head(x)
-
-        if targets is None:
-            return logits, None
-
-        B, T, C = logits.shape
-        logits = logits.view(B*T, C)
-        targets = targets.reshape(B*T)
-        loss = logits.cross_entropy(targets)
-
-        return logits, loss
+        return self.lm_head(x)
 
     def parameters(self):
         layers = [self.token_embedding_table, self.position_embedding_table, self.lm_head, self.blocks, self.ln_f]
@@ -205,7 +148,7 @@ class GPTLanguageModel:
             nn.Dropout.training = False
             for _ in range(max_new_tokens):
                 idx_cond = idx[:, -self.block_size:]
-                logits, _ = self(idx_cond)
+                logits = self(idx_cond)
                 logits = logits[:, -1, :]
                 probs = logits.softmax()
                 idx_next = (probs.data.cumsum(1) > xp.random.rand(idx.shape[0], 1)).argmax(1, keepdims=True)
@@ -213,55 +156,23 @@ class GPTLanguageModel:
             nn.Dropout.training = True
         return to_numpy(idx)
 
-model = GPTLanguageModel(vocab_size, EMBEDDING_DIMENSIONS, N_HEAD, N_LAYER, BLOCK_SIZE, DROPOUT)
-
-optimizer = nn.Adam(model.parameters(), lr=LR)
-
-log(f'Device: {DEVICE}, parameters: {sum(p.data.size for p in model.parameters())}')
-
-def load_weights():
+def load_weights(model):
+    # saved in model.parameters() order, so the shapes have to line up one for one
+    if not os.path.exists(WEIGHTS_FILE):
+        sys.exit(f"no weights at {WEIGHTS_FILE}, run gpt_shakespear.py first")
     saved = np.load(WEIGHTS_FILE)
-    for p, key in zip(model.parameters(), saved.files):
-        p.data = xp.asarray(saved[key])
+    params = model.parameters()
+    if len(params) != len(saved.files):
+        sys.exit(f"weights file has {len(saved.files)} tensors but the model has {len(params)}, do the settings match?")
+    for p, key in zip(params, saved.files):
+        w = saved[key]
+        if p.data.shape != w.shape:
+            sys.exit(f"shape mismatch on {key}: model {p.data.shape}, file {w.shape}, do the settings match?")
+        p.data = xp.asarray(w)
 
-def evaluate(step):
-    # log losses and checkpoint whenever val loss hits a new best
-    global best_val, bad_evals
-    losses = estimate_loss()
-    log(f'step {step}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}')
-    if losses['val'] < best_val - MIN_DELTA:
-        best_val = losses['val']
-        bad_evals = 0
-        save_weights()
-    else:
-        bad_evals += 1
-    return bad_evals >= PATIENCE
-
-MIN_LR = LR / 10
-def get_lr(step):
-    progress = step / MAX_ITERS
-    return MIN_LR + 0.5 * (LR - MIN_LR) * (1 + math.cos(math.pi * progress))
-
-for step in range(MAX_ITERS):
-    optimizer.lr = get_lr(step)
-
-    if step % EVAL_INTERVAL == 0 and evaluate(step):
-        log(f'early stop at step {step}, best val {best_val:.4f}')
-        break
-
-    xb, yb = get_batch('train')
-
-    _, loss = model(xb, yb)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-
-evaluate(MAX_ITERS)
-load_weights()
+model = GPTLanguageModel(vocab_size, EMBEDDING_DIMENSIONS, N_HEAD, N_LAYER, BLOCK_SIZE, DROPOUT)
+load_weights(model)
+print(f'Device: {DEVICE}, parameters: {sum(p.data.size for p in model.parameters())}\n')
 
 context = np.zeros((1,1), dtype=int)
 print(decode(model.generate(context, max_new_tokens=MAX_NEW_TOKENS)[0].tolist()))
-with open(os.path.join(HERE, "output.txt"), "a") as f:
-    f.write(decode(model.generate(context, max_new_tokens=(MAX_NEW_TOKENS*7))[0].tolist()))
-
-# To qoute an earlier training iteration: To withll your hangell with

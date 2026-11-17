@@ -13,7 +13,7 @@ Each script adds the root folder to its path so it can find `tensor.py`, `nn.py`
 
 Everything runs on the CPU by default. If you have an NVIDIA card and CuPy installed (`pip install cupy-cuda13x`) you can run on the GPU instead:
 ```
-MLP_DEVICE=gpu python3 GPT/gpt_shakespear.py
+MLP_DEVICE=gpu python3 GPT/Shakespear/gpt_shakespear.py
 ```
 The GPT script sets this to gpu on its own, so change it at the top of the file if you don't have CuPy.
 
@@ -27,7 +27,7 @@ micrograd/    the Value class and the MLP built on it
 mnist/        MNIST training with the Value MLP and the Tensor MLP
 makemore/     name generators, from bigram up to the WaveNet style model
 rubiks/       2x2 Rubik's cube solver (my own project)
-GPT/          character level GPT trained on Shakespeare
+GPT/          character level GPT trained on Shakespeare (in Shakespear/)
 ```
 
 ## MLP with Value class (micrograd/)
@@ -158,17 +158,17 @@ Just picking the best move every time only solved 13% of the depth 11 cubes, so 
 
 `test_network.py` runs those tests and `solve.py` opens a little tkinter GUI where you can scramble or paint the cube yourself and watch it solve.
 
-## GPT (GPT/)
+## GPT (GPT/Shakespear/)
 Part seven of the series, a character level GPT that trains on `input.txt` (all of tiny Shakespeare) and writes new Shakespeare. It's Andrej's model rebuilt on my Tensor class, 6 blocks of multi head self attention and feed forward, 6 heads, 384 embedding dimensions and a context of 256 characters. That comes out to about 10.8 million parameters.
 
 This is what `backend.py` was for. Running it on numpy would've taken forever, so tensor.py and nn.py can swap to CuPy and run on the GPU without changing anything else.
 
 ```
-python3 GPT/gpt_shakespear.py
+python3 GPT/Shakespear/gpt_shakespear.py
 ```
 It trains for up to 15,000 steps with a cosine learning rate and checks the loss every 1,000. It saves the weights whenever val loss hits a new best, and stops early if it doesn't improve for 3 checks in a row. Every check goes to `training_log.txt`, and when it's done it generates text with the best weights and appends it to `output.txt`.
 
-The best val loss so far is 1.486 (train was 1.11, so it's starting to overfit by the end). A sample from `output.txt`:
+The best val loss so far is 1.486 (train was 1.11, so it's starting to overfit by the end). To get more text out of the saved weights without training again, run `python3 GPT/Shakespear/sample.py`. A sample from `output.txt`:
 ```
 MARCIUS:
 I cannot me would not to seek for a woman!
