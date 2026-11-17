@@ -1,0 +1,33 @@
+Device: gpu, parameters: 10788929
+step 0: train loss 4.5908, val loss 4.5854
+step 1000: train loss 1.8807, val loss 1.9972
+step 2000: train loss 1.5725, val loss 1.7558
+Device: gpu, parameters: 10788929
+step 0: train loss 5.0366, val loss 5.0491
+step 1000: train loss 1.9027, val loss 2.0186
+step 2000: train loss 1.5993, val loss 1.7689
+step 3000: train loss 1.4532, val loss 1.6561
+step 4000: train loss 1.3773, val loss 1.5901
+step 5000: train loss 1.3233, val loss 1.5595
+step 6000: train loss 1.2741, val loss 1.5460
+step 7000: train loss 1.2350, val loss 1.5161
+step 8000: train loss 1.2068, val loss 1.5049
+step 9000: train loss 1.1857, val loss 1.5019
+
+Device: gpu, parameters: 10788929
+step 0: train loss 4.6337, val loss 4.6265
+step 1000: train loss 1.9482, val loss 2.0507
+step 2000: train loss 1.6115, val loss 1.7820
+step 3000: train loss 1.4575, val loss 1.6722
+step 4000: train loss 1.3858, val loss 1.6084
+step 5000: train loss 1.3263, val loss 1.5737
+step 6000: train loss 1.2863, val loss 1.5546
+step 7000: train loss 1.2495, val loss 1.5222
+step 8000: train loss 1.2174, val loss 1.5043
+step 9000: train loss 1.1982, val loss 1.5023
+step 10000: train loss 1.1735, val loss 1.5030
+step 11000: train loss 1.1586, val loss 1.4930
+step 12000: train loss 1.1417, val loss 1.4875
+step 13000: train loss 1.1334, val loss 1.5026
+step 14000: train loss 1.1220, val loss 1.4862
+step 15000: train loss 1.1092, val loss 1.4930

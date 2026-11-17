@@ -1,5 +1,6 @@
 from tensor import Tensor, no_grad
-import numpy as np
+from backend import xp
+import numpy as np    # weight init only, so a seed gives the same weights on CPU and GPU
 
 class Linear:
     def __init__(self, fan_in, fan_out, bias=True):
@@ -24,8 +25,8 @@ class BatchNorm1d:
         # parameters (trained with backprop)
         self.gamma = Tensor(np.ones(dim))
         self.beta = Tensor(np.zeros(dim))
-        self.running_mean = np.zeros(dim)
-        self.running_var = np.ones(dim)
+        self.running_mean = xp.zeros(dim)
+        self.running_var = xp.ones(dim)
 
     def __call__(self, x):
         axes = tuple(range(x.data.ndim - 1))   # (0,) for 2D, (0, 1) for 3D
@@ -34,10 +35,22 @@ class BatchNorm1d:
             self.running_mean = (1-self.momentum) * self.running_mean + self.momentum * x.data.mean(axes)
             self.running_var  = (1-self.momentum) * self.running_var  + self.momentum * x.data.var(axes, ddof=1)
         else:
-            xhat = (x - self.running_mean) / np.sqrt(self.running_var + self.eps)
+            xhat = (x - self.running_mean) / xp.sqrt(self.running_var + self.eps)
             out = self.gamma * xhat + self.beta
         return out
 
+    def parameters(self):
+        return [self.gamma, self.beta]
+
+class LayerNorm:
+    def __init__(self, dim, eps=1e-5):
+        self.eps = eps
+        self.gamma = Tensor(np.ones(dim))
+        self.beta = Tensor(np.zeros(dim))
+
+    def __call__(self, x):
+        return x.layer_norm(self.gamma, self.beta, self.eps)
+    
     def parameters(self):
         return [self.gamma, self.beta]
 
@@ -45,6 +58,27 @@ class Tanh:
     def __call__(self, x):
         out = x.tanh()
         return out
+    def parameters(self):
+        return []
+
+class ReLU:
+    def __call__(self, x):
+        return x.relu()
+    def parameters(self):
+        return []
+
+class Dropout:
+    training = True
+
+    def __init__(self, p=0.5):
+        self.p = p
+    
+    def __call__(self, x):
+        if not Dropout.training or self.p == 0:
+            return x
+        mask = (xp.random.rand(*x.shape) > self.p) / (1 - self.p)
+        return x * mask
+    
     def parameters(self):
         return []
 
@@ -95,8 +129,8 @@ class Adam:
         self.beta1, self.beta2 = betas
         self.eps = eps
         self.t = 0
-        self.m = [np.zeros_like(p.data) for p in parameters]
-        self.v = [np.zeros_like(p.data) for p in parameters]
+        self.m = [xp.zeros_like(p.data) for p in parameters]
+        self.v = [xp.zeros_like(p.data) for p in parameters]
 
     def zero_grad(self):
         for p in self.parameters:
@@ -112,4 +146,4 @@ class Adam:
             g = p.grad
             m *= self.beta1; m += (1 - self.beta1) * g        # update in place so self.m keeps it
             v *= self.beta2; v += (1 - self.beta2) * g * g
-            p.data -= self.lr * (m / c1) / (np.sqrt(v / c2) + self.eps)
+            p.data -= self.lr * (m / c1) / (xp.sqrt(v / c2) + self.eps)
