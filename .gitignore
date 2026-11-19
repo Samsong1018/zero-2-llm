@@ -4,3 +4,4 @@ dataset.npz
 weights.*
 GPT/datasets/
 GPT/somab_training.md
+GPT/kaggle/

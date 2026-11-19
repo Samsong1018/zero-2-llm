@@ -215,11 +215,11 @@ class DataLoader:
 #   full: the 805M run
 SIZES = {
     "tiny": dict(config=dict(block_size=256, n_layer=4, n_head=4, n_kv_head=2, n_embd=256, mlp_hidden=688),
-                 B=8, total_batch=8 * 256 * 4, max_lr=1e-3, warmup=50),
+                B=8, total_batch=8 * 256 * 4, max_lr=1e-3, warmup=50),
     "pilot": dict(config=dict(n_layer=12, n_head=12, n_kv_head=4, n_embd=768, mlp_hidden=2048),
-                  B=16, total_batch=524288, max_lr=6e-4, warmup=700),
+                B=16, total_batch=524288, max_lr=6e-4, warmup=700),
     "full": dict(config=dict(),
-                 B=4, total_batch=524288, max_lr=3e-4, warmup=2000),
+                B=4, total_batch=524288, max_lr=3e-4, warmup=2000),
 }
 
 def get_lr(step, max_lr, warmup, decay_start, decay_steps):
