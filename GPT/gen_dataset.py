@@ -13,13 +13,15 @@ SHARD_SIZE = 100_000_000 # tokens per train shard, 200MB as uint16
 VAL_TOKENS = 2_000_000 # per source
 ENCODE_BATCH = 1024 # docs tokenized at a time
 
-# folder in datasets/ -> share of the mix. stack-edu (code) isn't downloaded so its 8% is spread over the rest
+# folder in datasets/ -> share of the mix. shards before train_000023 were made without stack-edu (code),
+# with its 8% spread over the rest. stack-edu is Python + Markdown, see datasets/stack-edu-index/fetch.py
 MIX = {
-    "fineweb-edu": 0.65,
-    "dclm": 0.27,
-    "finemath-3plus": 0.05,
-    "wikipedia": 0.015,
-    "cosmopedia-v2": 0.015,
+    "fineweb-edu": 0.598,
+    "dclm": 0.2484,
+    "finemath-3plus": 0.046,
+    "wikipedia": 0.0138,
+    "cosmopedia-v2": 0.0138,
+    "stack-edu": 0.08,
 }
 
 # junk filter: spam like "how many zeros in a duotrigintillion" is up to a million tokens of just "0" and ",".
@@ -136,7 +138,10 @@ def save_state(state):
     os.replace(tmp, STATE_PATH) # so a crash mid-write can't leave a broken state file
 
 def make_val(sources, state):
+    """ val set from the first VAL_TOKENS of every source that doesn't have one yet, so a source added later still gets one """
     for name, src in sources.items():
+        if os.path.exists(os.path.join(OUT_DIR, f"val_{name}.npy")):
+            continue
         chunks, n = [], 0
         while n < VAL_TOKENS:
             doc = src.next_doc()
@@ -149,7 +154,7 @@ def make_val(sources, state):
             continue
         n = save_tokens(os.path.join(OUT_DIR, f"val_{name}.npy"), chunks)
         print(f"val_{name}.npy: {n:,} tokens")
-        state["sources"][name] = {"pos": src.pos, "tokens": 0}
+        state["sources"][name]["pos"] = src.pos # train starts after the val docs
     state["val_done"] = True
     save_state(state)
 
@@ -167,8 +172,7 @@ def main():
     for name in MIX:
         state["sources"].setdefault(name, {"pos": None, "tokens": 0})
 
-    if not state["val_done"]:
-        make_val(sources, state)
+    make_val(sources, state) # only does sources with no val_<name>.npy yet
 
     while True:
         chunks, n = [], 0

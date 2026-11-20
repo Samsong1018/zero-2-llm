@@ -348,11 +348,16 @@ if __name__ == "__main__":
         paths = ckpt_paths()
         path = paths[-1] if paths else None
         if path is None and HF_REPO:
-            from huggingface_hub import hf_hub_download
-            try:
-                path = hf_hub_download(HF_REPO, f"{SIZE}/latest.pt", local_dir=CKPT_DIR)
-            except Exception as e:
-                log(f"no checkpoint on {HF_REPO} ({type(e).__name__}), starting fresh")
+            local = os.path.join(CKPT_DIR, SIZE, "latest.pt")
+            if master: # one download, not one per GPU (two at once race on the same file)
+                from huggingface_hub import hf_hub_download
+                try:
+                    hf_hub_download(HF_REPO, f"{SIZE}/latest.pt", local_dir=CKPT_DIR)
+                except Exception as e:
+                    log(f"no checkpoint on {HF_REPO} ({type(e).__name__}), starting fresh")
+            if ddp:
+                dist.barrier() # every rank waits here until rank 0's download is done
+            path = local if os.path.exists(local) else None
         if path is None:
             return 0, None
         ckpt = torch.load(path, map_location=device, weights_only=False)
