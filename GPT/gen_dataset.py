@@ -22,9 +22,23 @@ MIX = {
     "cosmopedia-v2": 0.015,
 }
 
+# junk filter: spam like "how many zeros in a duotrigintillion" is up to a million tokens of just "0" and ",".
+# a doc gets skipped when its two most common tokens are over half of it. real text sits around 0.05-0.15,
+# so 0.5 only catches number dumps, blank forms and the like (~32 docs per 800M tokens on the first chunk)
+JUNK_MIN_TOKENS = 200 # shorter docs aren't checked
+JUNK_TOP2_SHARE = 0.5
+
 enc = Tokenizer.from_file(TOKENIZER_PATH)
 EOT = enc.token_to_id("<|endoftext|>")
 assert enc.get_vocab_size() <= 2**16, "token ids have to fit in uint16"
+
+def is_junk(doc):
+    ids = doc[1:] # skip the <|endoftext|> in front
+    if len(ids) < JUNK_MIN_TOKENS:
+        return False
+    counts = np.bincount(ids)
+    top2 = np.partition(counts, -2)[-2:].sum() if len(counts) > 1 else counts.sum()
+    return top2 / len(ids) > JUNK_TOP2_SHARE
 
 class Source:
     """ reads one source's parquet files in name order, one row group at a time, and hands out tokenized docs """
@@ -38,6 +52,8 @@ class Source:
         self.docs = [] # the encoded batch, docs[doc_i] is row
         self.doc_i = 0
         self.done = False
+        self.skipped_docs = 0 # junk docs skipped since the last reset_skipped()
+        self.skipped_tokens = 0
 
     def files(self):
         return sorted(os.path.basename(f) for f in glob.glob(os.path.join(DATA_DIR, self.name, "*.parquet")))
@@ -74,6 +90,18 @@ class Source:
         self.doc_i = 0
 
     def next_doc(self):
+        """ the next doc that isn't junk, or None once the downloaded files run out """
+        while True:
+            doc = self.next_raw_doc()
+            if doc is None or not is_junk(doc):
+                return doc
+            self.skipped_docs += 1
+            self.skipped_tokens += len(doc)
+
+    def reset_skipped(self):
+        self.skipped_docs = self.skipped_tokens = 0
+
+    def next_raw_doc(self):
         while self.doc_i >= len(self.docs):
             if self.done:
                 return None
@@ -145,6 +173,8 @@ def main():
     while True:
         chunks, n = [], 0
         per_source = {name: 0 for name in MIX}
+        for src in sources.values():
+            src.reset_skipped()
         t0 = time.time()
         ran_out = None
         while n < SHARD_SIZE:
@@ -170,11 +200,16 @@ def main():
         for name in MIX:
             state["sources"][name]["pos"] = sources[name].pos
             state["sources"][name]["tokens"] += per_source[name]
+            s = state["sources"][name]
+            s["skipped_docs"] = s.get("skipped_docs", 0) + sources[name].skipped_docs
+            s["skipped_tokens"] = s.get("skipped_tokens", 0) + sources[name].skipped_tokens
         save_state(state)
 
         dt = time.time() - t0
         mix = ", ".join(f"{s} {per_source[s] / n:.1%}" for s in MIX)
-        print(f"{shard_name}: {n:,} tokens in {dt:.0f}s ({n / dt / 1e6:.2f}M tok/s) | {mix}")
+        skipped = sum(src.skipped_docs for src in sources.values())
+        skipped_tok = sum(src.skipped_tokens for src in sources.values())
+        print(f"{shard_name}: {n:,} tokens in {dt:.0f}s ({n / dt / 1e6:.2f}M tok/s) | {mix} | junk skipped: {skipped} docs, {skipped_tok:,} tokens")
 
     total = sum(s["tokens"] for s in state["sources"].values())
     print(f"done. {state['next_shard']} train shards, {total:,} train tokens total")
