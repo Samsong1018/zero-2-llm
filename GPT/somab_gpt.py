@@ -272,8 +272,11 @@ if __name__ == "__main__":
             device = "mps"
     master = rank == 0 # only this process logs, samples and saves
     device_type = "cuda" if device.startswith("cuda") else device
-    # fp16 because T4s have no bf16. SOMAB_FP16=0 to test in fp32
-    use_fp16 = device_type == "cuda" and os.environ.get("SOMAB_FP16", "1") == "1"
+    # fp16 by default because T4s have no bf16. SOMAB_BF16=1 on GPUs that have it (L40S), SOMAB_FP16=0 to test in fp32
+    use_bf16 = device_type == "cuda" and os.environ.get("SOMAB_BF16") == "1"
+    use_fp16 = device_type == "cuda" and not use_bf16 and os.environ.get("SOMAB_FP16", "1") == "1"
+    use_amp = use_bf16 or use_fp16
+    amp_dtype = torch.bfloat16 if use_bf16 else torch.float16
     use_8bit = device_type == "cuda" and os.environ.get("SOMAB_8BIT", "1") == "1"
 
     def log(msg):
@@ -291,11 +294,13 @@ if __name__ == "__main__":
 
     # ---- model + optimizer ----
     model = GPT(config)
-    model.grad_checkpoint = SIZE != "tiny"
+    # on by default to fit the T4s. SOMAB_GRAD_CKPT=0 on a big GPU, faster but uses more memory
+    model.grad_checkpoint = os.environ.get("SOMAB_GRAD_CKPT", "0" if SIZE == "tiny" else "1") == "1"
     model.to(device)
     model.train()
     raw_model = model # the plain module, this is what gets saved
     optimizer = raw_model.configure_optimizer(WEIGHT_DECAY, run["max_lr"], use_8bit)
+    # only fp16 needs loss scaling. it stays (disabled) under bf16 so checkpoints keep the same keys
     scaler = torch.amp.GradScaler(device_type, enabled=use_fp16)
 
     enc = Tokenizer.from_file(os.path.join(HERE, "tokenizer", "smollm2_tokenizer.json"))
@@ -364,7 +369,9 @@ if __name__ == "__main__":
         assert ckpt["size"] == SIZE, f"checkpoint is for {ckpt['size']}, not {SIZE}"
         raw_model.load_state_dict(ckpt["model"])
         optimizer.load_state_dict(ckpt["optimizer"])
-        scaler.load_state_dict(ckpt["scaler"])
+        # a bf16 checkpoint has an empty scaler state, and an enabled scaler refuses to load that. start it fresh
+        if ckpt["scaler"]:
+            scaler.load_state_dict(ckpt["scaler"])
         torch.set_rng_state(ckpt["rng_cpu"].cpu())
         if ckpt["rng_cuda"] is not None and device_type == "cuda":
             torch.cuda.set_rng_state(ckpt["rng_cuda"].cpu())
@@ -381,7 +388,7 @@ if __name__ == "__main__":
         model = DDP(model, device_ids=[local_rank])
 
     log(f"size {SIZE} | {raw_model.num_params() / 1e6:.1f}M params | device {device} x{world_size} | "
-        f"B {B} T {T} grad_accum {grad_accum} | 8-bit adam {use_8bit} | fp16 {use_fp16}")
+        f"B {B} T {T} grad_accum {grad_accum} | 8-bit adam {use_8bit} | fp16 {use_fp16} | bf16 {use_bf16} | grad ckpt {raw_model.grad_checkpoint}")
 
     # ---- val + sampling ----
     def val_loss():
@@ -398,7 +405,7 @@ if __name__ == "__main__":
                     if batch is None:
                         break
                     x, y = batch[0].to(device), batch[1].to(device)
-                    with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=use_fp16):
+                    with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
                         _, loss = model(x, y)
                     total += loss
                     n += 1
@@ -414,7 +421,7 @@ if __name__ == "__main__":
         g = torch.Generator(device=device).manual_seed(42)
         with torch.no_grad():
             while x.size(1) < max_len:
-                with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=use_fp16):
+                with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
                     logits, _ = raw_model(x[:, -T:])
                 probs = F.softmax(logits[:, -1, :], dim=-1)
                 topk_probs, topk_indices = torch.topk(probs, 50, dim=-1)
@@ -463,7 +470,7 @@ if __name__ == "__main__":
             if ddp:
                 # only sync gradients between the GPUs on the last micro step
                 model.require_backward_grad_sync = micro == grad_accum - 1
-            with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=use_fp16):
+            with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
                 _, loss = model(x, y)
             # divide so the accumulated gradient is the mean over the whole batch, not the sum
             loss = loss / grad_accum

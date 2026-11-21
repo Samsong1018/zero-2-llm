@@ -11,4 +11,9 @@ The pilot test went super well reach a loss of roughly 3.5. I noticed some weird
 
 ## 04/20
 
+<<<<<<< HEAD
 I realized today that I had some AWS credits so I'm going to start training the big model on an AWS g6e which hopefully should give me a major jump start on this. Then I'll head back to kaggle and google colab to finish the next 9mo of training. (I'm currently predicting it will take less than that because training has been going faster than I thought). I also finished pulling the dataset and converting it for the big run.
+=======
+I realized today that I had some AWS credits so I'm going to start training the big model on an AWS g6e which hopefully should give me a major jump start on this. Then I'll head back to kaggle and google colab to finish the next 9mo of training. (I'm currently predicting it will take less than that because training has been going faster than I thought). I also finished pulling the dataset and converting it for the big run. 
+Pilot two went well, had some issues with my resuming run test, but got those sorted out and I'm about to start training the big model.
+>>>>>>> 40f3052 (updates for aws training)
