@@ -7,7 +7,7 @@ I'm currently running a smoke test then I will move on to a pilot test. The pilo
 
 ## 04/19
 
-The pilot test went super well reach a loss of roughly 3.5. I noticed some weird losses on specific datasets (0.2, 1.0) which I realized were datasets that repeated numbers over and over again. like how many zeros are in said numeber 00000000000000000... so I updated gen_dataset, regenerated the dataset and I'm starting a second pilot test, which should be the last test before we commence the full training run for the 800m parameter model. 
+The pilot test went super well reach a loss of roughly 3.5. I noticed some weird losses on specific datasets (0.2, 1.0) which I realized were datasets that repeated numbers over and over again. like how many zeros are in said number 00000000000000000... so I updated gen_dataset, regenerated the dataset and I'm starting a second pilot test, which should be the last test before we commence the full training run for the 800m parameter model. 
 
 ## 04/20
 
